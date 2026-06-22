@@ -1,5 +1,23 @@
-const API_URL =
-  (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000/api";
+function normalizeApiUrl(raw: string): string {
+  const trimmed = raw.replace(/\/+$/, "");
+  return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
+}
+
+function resolveConfiguredApiUrl(): string {
+  const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (envUrl) {
+    return normalizeApiUrl(envUrl);
+  }
+
+  // Local dev uses the Vite proxy (/api -> backend). Production must set VITE_API_URL.
+  if (import.meta.env.DEV) {
+    return "/api";
+  }
+
+  return "/api";
+}
+
+const API_URL = resolveConfiguredApiUrl();
 
 export const TOKEN_KEY = "talentlens_token";
 
@@ -33,8 +51,30 @@ interface RequestOptions {
   isForm?: boolean;
 }
 
+export function apiBaseUrl() {
+  return API_URL;
+}
+
+/** Absolute API base URL (needed for OAuth redirects). */
+export function resolveApiBaseUrl(): string {
+  if (API_URL.startsWith("http")) return API_URL;
+  if (typeof window !== "undefined") {
+    return `${window.location.origin}${API_URL}`;
+  }
+  return API_URL;
+}
+
+function missingProductionApiMessage(): string {
+  return "Backend URL is not configured. Set VITE_API_URL to your Render backend URL (e.g. https://your-app.onrender.com) in Vercel environment variables, then redeploy.";
+}
+
 export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Promise<T> {
   const { method = "GET", body, signal, isForm } = opts;
+
+  if (!import.meta.env.DEV && !import.meta.env.VITE_API_URL?.trim() && typeof window !== "undefined") {
+    throw new ApiError(missingProductionApiMessage(), 0);
+  }
+
   const token = getToken();
 
   const headers: Record<string, string> = {};
@@ -48,7 +88,6 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
     finalBody = JSON.stringify(body);
   }
   if (isForm && body instanceof FormData) {
-    // browser will set the right multipart boundary
     delete headers["Content-Type"];
   }
 
@@ -61,11 +100,11 @@ export async function apiRequest<T>(path: string, opts: RequestOptions = {}): Pr
       signal,
     });
   } catch (e) {
-    throw new ApiError(
-      "Unable to reach the server. Please check your connection or try again later.",
-      0,
-      e,
-    );
+    const hint =
+      import.meta.env.DEV
+        ? "Start the backend with `npm run dev` in the backend folder."
+        : missingProductionApiMessage();
+    throw new ApiError(`Unable to reach the server. ${hint}`, 0, e);
   }
 
   const contentType = res.headers.get("content-type") ?? "";
@@ -95,7 +134,3 @@ export const api = {
   del: <T,>(path: string, opts?: Omit<RequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...opts, method: "DELETE" }),
 };
-
-export function apiBaseUrl() {
-  return API_URL;
-}

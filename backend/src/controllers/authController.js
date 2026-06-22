@@ -37,17 +37,9 @@ async function logout(req, res, next) {
   }
 }
 
-async function googleAuth(req, res) {
-  res.status(501).json({
-    success: false,
-    message: "Google OAuth is not implemented yet",
-  });
-}
-
 module.exports = {
   register,
   login,
   me,
   logout,
-  googleAuth,
 };

@@ -5,6 +5,12 @@ const generateToken = require("../utils/generateToken");
 
 const router = express.Router();
 
+const frontendUrl = () =>
+  (process.env.FRONTEND_URL || process.env.CLIENT_URL || "http://localhost:5173").replace(
+    /\/+$/,
+    "",
+  );
+
 router.get(
   "/google",
   passport.authenticate("google", {
@@ -16,7 +22,7 @@ router.get(
   "/google/callback",
   passport.authenticate("google", {
     session: false,
-    failureRedirect: `${process.env.FRONTEND_URL}/login`,
+    failureRedirect: `${frontendUrl()}/login`,
   }),
   async (req, res) => {
     try {
@@ -56,14 +62,10 @@ router.get(
         avatarUrl: user.avatar_url || undefined,
       });
 
-      res.redirect(
-        `${process.env.FRONTEND_URL}/auth/callback?token=${token}`
-      );
+      res.redirect(`${frontendUrl()}/auth/callback?token=${token}`);
     } catch (error) {
       console.error("Google OAuth Error:", error);
-      res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=google_auth_failed`
-      );
+      res.redirect(`${frontendUrl()}/login?error=google_auth_failed`);
     }
   }
 );

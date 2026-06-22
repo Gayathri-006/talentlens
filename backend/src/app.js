@@ -22,11 +22,40 @@ const errorMiddleware = require("./middleware/errorMiddleware");
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://localhost:3000",
+  "http://localhost:5174",
+]
+  .map((url) => url && url.replace(/\/+$/, ""))
+  .filter(Boolean);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+
+  const normalized = origin.replace(/\/+$/, "");
+  if (allowedOrigins.includes(normalized)) return true;
+  if (normalized.endsWith(".vercel.app")) return true;
+  if (/^http:\/\/localhost:\d+$/.test(normalized)) return true;
+
+  return false;
+}
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        console.warn(`CORS blocked origin: ${origin}`);
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
-  })
+  }),
 );
 
 app.use(express.json());

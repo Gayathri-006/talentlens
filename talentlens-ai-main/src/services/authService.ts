@@ -1,4 +1,4 @@
-import { api, apiBaseUrl, setToken } from "@/lib/api";
+import { api, resolveApiBaseUrl, setToken } from "@/lib/api";
 import type { User } from "@/lib/types";
 
 export interface AuthResponse {
@@ -19,5 +19,5 @@ export const authService = {
       setToken(null);
     }
   },
-  googleAuthUrl: () => `${apiBaseUrl()}/auth/google`,
+  googleAuthUrl: () => `${resolveApiBaseUrl()}/auth/google`,
 };
