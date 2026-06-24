@@ -6,6 +6,18 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+function TalentLensLogo() {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="relative flex h-8 w-8 items-center justify-center">
+        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-chart-2 shadow-md shadow-primary/30" />
+        <Brain className="relative h-4 w-4 text-white" />
+      </div>
+      <span className="font-bold tracking-tight">TalentLens</span>
+    </div>
+  );
+}
+
 export interface NavItem {
   label: string;
   to: string;
@@ -31,11 +43,8 @@ export function DashboardLayout({ nav, children }: { nav: NavItem[]; children: R
       {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-border bg-background/95 backdrop-blur transition-transform lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-16 items-center justify-between border-b border-border px-5">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-chart-2 text-primary-foreground shadow-sm shadow-primary/30">
-              <Brain className="h-4 w-4" />
-            </div>
-            <span className="font-semibold tracking-tight">TalentLens</span>
+          <Link to="/">
+            <TalentLensLogo />
           </Link>
           <button onClick={() => setOpen(false)} className="lg:hidden" aria-label="Close menu">
             <X className="h-5 w-5" />
